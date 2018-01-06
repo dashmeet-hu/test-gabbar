@@ -1,0 +1,32 @@
+extends ../layouts/default
+
+block content
+	.container: .jumbotron
+
+		#login
+			<input type='button' value='Admin' onclick='login(this)'>
+			<input type='button' value='Dashmeet' onclick='login(this)'>
+			<input type='button' value='Hitesh' onclick='login(this)'>
+		
+		img(src='/images/logo.svg', width='160')
+		h1 Welcome
+
+		div.main-block
+			h2.vehicle Taxi
+			p.price Rs. 250
+			button.book-ride.now Ride Now
+			button.book-ride.later Schedule a Ride
+
+		div.main-block
+			h2.vehicle Auto
+			p.price Rs. 100
+			button.book-ride.now Ride Now
+			button.book-ride.later Schedule a Ride
+
+		div.main-block
+			h2.vehicle Bike
+			p.price Rs. 50
+			button.book-ride.now Ride Now
+			button.book-ride.later Schedule a Ride
+
+		script(src='/gabbar/js/script.js')
