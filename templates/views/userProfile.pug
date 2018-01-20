@@ -1,0 +1,77 @@
+extends ../layouts/default
+
+block content
+	script(src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.6/angular.min.js")
+
+	div
+		div#userProfile
+			div
+				div.activityFeed
+					h4 Activity Feed
+					
+					each dateGroup, index in custom.groupedByDate
+						div
+							h4.eventDate
+								b= index
+							div.eventDetails
+								each event in dateGroup
+									div.eventContainer
+										div.eventWrapper(onclick="toggleTrackedValuesDisplay(this)")
+											span.eventTime= custom.getTime(event.timestamp)
+											span.eventName
+												b= event.eventname
+
+												if event.isAnon
+													i &nbsp;| anonomous
+											span.systemDetails
+												= custom.getUserAgent(event.userAgent)
+										div.trackedValues(data-display='false')
+											each trackValue, trackKey in event.details
+												div
+													span= trackKey
+													span= trackValue
+
+			div 
+				div.profile
+					h4=firstname + ' ' + lastname
+
+					div.basicDetails
+						div
+							span 
+								b Email ID
+							span= email
+
+						div
+							span 
+								b Contact Number
+							span= contactNo
+
+						div
+							span 
+								b Gender
+							span= gender
+
+						div
+							span 
+								b Last Activity
+							span= custom.getTimeFromNow(updatedOn)
+
+						div
+							span 
+								b Created On
+							span= custom.getTimeFromNow(createdOn)
+
+						div
+							span 
+								b Total Events Triggered
+							span= events.length
+	script.
+
+		var toggleTrackedValuesDisplay = function (element) {
+				let elementToBeToggled = element.parentElement.querySelector('.trackedValues');
+				if(elementToBeToggled.dataset.display == 'false') {
+					elementToBeToggled.dataset.display = 'true';
+				} else {
+					elementToBeToggled.dataset.display = 'false'
+				}
+			}

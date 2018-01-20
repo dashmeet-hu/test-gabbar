@@ -16,6 +16,7 @@ window.Gabbar = {
     recognize: function(id) {
         if (!id) {
             if (this.autoInitAnonSession) {
+
                 var anonId = this.getCookie('gabbaranon');
 
                 if (!anonId) {

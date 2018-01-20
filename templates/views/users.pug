@@ -1,0 +1,441 @@
+extends ../layouts/default
+
+block content
+	script(src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.6/angular.min.js")
+
+	div
+		div(ng-app="filterApp")
+			div#filterApp(ng-controller="FilterController")
+
+				div
+					h4(ng-if="model.selectedFilter === ''") Filters
+					h4(ng-if="model.selectedFilter") {{model.selectedFilter}}
+					h6.clearFilters 
+						a(ng-click="clearFilters(true)" ng-if="filterQueries.length !== 0") Clear
+
+					div.filter(ng-repeat="filterQuery in filterQueries")
+						//- div {{filterQuery.options}}
+						div
+							select.filterType(ng-model="filterQuery.options.type" ng-change="filterQuery.getEvents()")
+								option(selected disabled value) Select Type
+								option(value="Event") Event
+								option(value="Attributes" disabled) Attributes
+
+							select.events(ng-model="filterQuery.options.eventName" ng-change="filterQuery.getTraitKeys()" ng-if="filterQuery.options.type")
+								option(selected disabled value="") Select Event
+								option(ng-repeat="event in filterQuery.events" value="{{event}}") {{event}}
+
+							select.traitKeys(ng-model="filterQuery.options.traitKey" ng-change="filterQuery.getTraitValues()" ng-if="filterQuery.traitKeys.length")
+								option(selected disabled value="") Select Trait
+								option(ng-repeat="traitKey in filterQuery.traitKeys" value="{{traitKey}}") {{traitKey}}
+
+							select.traitValues(ng-model="filterQuery.options.traitValue" ng-if="filterQuery.options.traitKey")
+								option(selected disabled value="") Select Trait Value
+								option(ng-repeat="traitValue in filterQuery.traitValues" value="{{traitValue}}") {{traitValue}}
+
+							select.occurenceKey(ng-model="filterQuery.options.occurenceKey" ng-change="filterQuery.setOccurenceKey()")
+								option(selected disabled value="") Occurence Type
+								option(value="before") was performed more than
+								option(value="after") was performed less than
+								option(value="not after") was not performed in last
+								option(value="in range") was performed during
+								option(value="not in range") was not performed during
+
+							span(ng-if="filterQuery.options.occurenceKey")
+								span(ng-if="filterQuery.options.isOccurenceTypeRange == true")
+									input.occurenceValue(type="text" placeholder="2018/01/01, 14:00" ng-model="filterQuery.options.occurenceRangeStart")
+									-
+									input.occurenceValue(type="text" placeholder="2018/01/01, 14:00" ng-model="filterQuery.options.occurenceRangeEnd")
+
+								span(ng-if="filterQuery.options.isOccurenceTypeRange == false")
+									input.occurenceValue(type="text" ng-model="filterQuery.options.occurenceValue")
+
+							span(ng-if="filterQuery.options.occurenceKey && !filterQuery.options.isOccurenceTypeRange")
+								select.occurenceUnit(ng-model="filterQuery.options.occurenceUnit" ng-change="filterQuery.setOccurenceUnit()")
+									option(selected disabled value="") Units
+									option(value="Days") Days
+									option(value="Hours") Hours
+									option(value="Minutes") Minutes
+
+						a.deleteFilter.pointer(ng-click="filterQuery.deleteFilter()") X
+
+					div.filterActions
+						div
+							button(ng-click="addFilterBox()" ng-if="filterQueries.length === 0") Create A Filter
+							button(ng-click="addFilterBox()" ng-if="filterQueries.length !== 0") Add Another Filter
+
+							select(ng-model="model.selectedFilter" ng-change="changeFilter()")
+								option(selected value="") Load Filters
+								option(ng-repeat="eachFilter in model.allFilters track by $index" value="{{eachFilter}}") {{eachFilter}} 
+						div
+
+							button(ng-click="togglePopupVisibility()" ng-if="filterQueries.length !== 0 && showPopup == false") Save Filter
+
+							button(ng-click="updateFilter()" ng-if="model.selectedFilter && filterQueries.length !== 0 && showPopup == false") Update Filter
+
+							div(ng-if="showPopup === true" style="display:inline-block; padding: 5px; background-color:#e1e1e1")
+								input(type="text" placeholder="give filter a name" ng-model="model.filterName")
+								button(ng-click="saveFilter()") Save
+								button(ng-click="togglePopupVisibility()") Back
+
+							button(ng-click="applyFilter()" ng-if="filterQueries.length !== 0") Apply Filter
+
+
+				div.resultWrapper
+					h4 Customers
+					table#result(style="width: 100%")
+						thead 
+							tr
+								th Name
+								th Phone Number
+								th Email ID
+								th Gender
+								th Last Updated
+
+						tbody
+							tr(ng-repeat="user in users")
+								td 
+									a(href="/users/view/{{user.customerId}}")
+										span {{user.firstname}} {{user.lastname}}
+								td {{user.contactNo}}
+								td {{user.email}}
+								td {{user.gender}}
+								td {{user.updatedOn}}
+
+	script.
+
+		var filterTypeElement = document.querySelector('#filterType');
+		var filteredListElement = document.querySelector('#filteredList');
+
+		angular.module('filterApp', [])
+		.controller('FilterController', function ($scope, $http) {
+
+			$scope.filterQueries = [];
+			$scope.users = [];
+			$scope.showPopup = false;
+			$scope.model = {
+				filterName: "",
+				selectedFilter: "",
+				allFilters: []
+			};
+
+			$scope.togglePopupVisibility = function() {
+				console.log('popup: ', $scope.showPopup)
+				$scope.showPopup = !$scope.showPopup;
+			}
+			$scope.addFilterBox = function () {
+				let filterQueryGenerator = {
+					options: {
+						type: "",
+						eventName: "",
+						traitKey: "",
+						traitValue: "",
+						occurenceKey: "",
+						occurenceValue: "",
+						occurenceUnit: "",
+						isOccurenceTypeRange: "",
+						occurenceRangeStart: "",
+						occurenceRangeEnd: ""
+					},
+
+					events: [],
+					traitKeys: [],
+					traitValues: [],
+
+					deleteFilter: function () {
+						$scope.filterQueries.splice($scope.filterQueries.indexOf(this), 1);
+						if($scope.filterQueries.length === 0) {
+							$scope.clearFilters(true);
+							$scope.applyFilter();
+						}
+					},
+
+					getEvents: function() {
+						let body = {};
+
+						if(this.options.type) {
+							$scope.fetchDetails(body, (error, response) => {
+								if (error) return error;
+								this.events = response;
+							})
+						}
+					},
+
+					getTraitKeys: function() {
+						let body = {
+							eventName: this.options.eventName
+						};
+						if(this.options.eventName) {
+							if(this.options.eventName === '_Register' || this.options.eventName === 'Login') {
+								this.traitKeys = [];
+								this.traitValues = [];
+
+								this.traitKey = "";
+								this.traitValue = "";
+							} else {
+								$scope.fetchDetails(body, (error, response) => {
+									if (error) return error;
+									this.traitKeys = response;
+									this.traitValues = [];			
+								})
+							}
+							
+						}
+					},
+
+					getTraitValues: function () {
+						let body = {
+							eventName: this.options.eventName,
+							traitKey: this.options.traitKey
+						};
+
+						if(this.options.traitKey) {
+							$scope.fetchDetails(body, (error, response) => {
+								if (error) return error;
+								this.traitValues = response;
+							})
+						}
+					},
+
+					setOccurenceKey: function() {
+						switch(this.options.occurenceKey) {
+							case 'before':
+							case 'after':
+								this.options.isOccurenceTypeRange = false
+								break;
+
+							case 'in range':
+							case 'not in range':
+								this.options.isOccurenceTypeRange = true
+								break;
+
+							default: 
+								break;
+						}
+					}
+				}
+
+				$scope.filterQueries.push(filterQueryGenerator);
+				let indexOfFilter = $scope.filterQueries.indexOf(filterQueryGenerator);
+				return $scope.filterQueries[indexOfFilter];
+			}
+
+			$scope.clearFilters = function (removeSelectedFilter) {
+
+				if(removeSelectedFilter) {
+					$scope.model.selectedFilter = "";
+				}
+				$scope.filterQueries = [];
+				$scope.applyFilter();
+			}
+
+			$scope.fetchDetails = function (body, callback) {
+				$http({
+					url: '/filter',
+					method: 'POST',
+					headers: {
+						"Content-type": "application/json; charset=UTF-8"
+					},
+					data: JSON.stringify(body)
+				})
+				.then(response => {
+					if(callback) return callback(null, response.data.result);
+				})
+				.catch(error => {
+					console.error(error);
+				});
+			}
+
+			$scope.applyFilter = function () {
+
+				$scope.persistURLState();
+				let filters = $scope.filterQueries.map(filterQuery => filterQuery.options);
+
+				let body = {};
+				body.filters = filters;
+				body.applyFilter = true;
+
+				console.log(body);
+
+				$http({
+					url: '/filter',
+					method: 'POST',
+					headers: {
+						"Content-type": "application/json; charset=UTF-8"
+					},
+					data: JSON.stringify(body)
+				})
+				.then(response => {
+					$scope.users = response.data;
+				})
+				.catch(error => {
+					console.error(error);
+				});
+			}
+
+			$scope.saveFilter = function () {
+				if($scope.model.filterName){
+					let body = {};
+					body.filters = $scope.filterQueries.map(filterQuery => filterQuery.options);
+					body.name = $scope.model.filterName;
+
+					$http({
+						url: '/filter/save',
+						method: 'POST',
+						headers: {
+							"Content-type": "application/json; charset=UTF-8"
+						},
+						data: JSON.stringify(body)
+					})
+					.then(response => {
+						$scope.togglePopupVisibility();
+						$scope.model.selectedFilter = body.name;
+						$scope.applyFilter();
+						$scope.listFilters();
+					})
+					.catch(error => {
+						console.error(error);
+					});
+				}
+			}
+
+			$scope.updateFilter = function () {
+				if($scope.model.selectedFilter){
+					let body = {};
+					body.filters = $scope.filterQueries.map(filterQuery => filterQuery.options);
+					body.name = $scope.model.selectedFilter;
+
+					$http({
+						url: '/filter/update',
+						method: 'POST',
+						headers: {
+							"Content-type": "application/json; charset=UTF-8"
+						},
+						data: JSON.stringify(body)
+					})
+					.then(response => {
+						$scope.applyFilter();
+					})
+					.catch(error => {
+						console.error(error);
+					});
+				}
+			}
+
+			$scope.listFilters = function () {
+				$http({
+					url: '/filter/list',
+					method: 'POST',
+					headers: {
+						"Content-type": "application/json; charset=UTF-8"
+					}
+				})
+				.then(response => {
+					console.log(response.data);
+					$scope.model.allFilters = response.data.filters;
+				})
+				.catch(error => {
+					console.error(error);
+				});
+			}
+
+			$scope.changeFilter = function () {
+				console.log(':::::::::::::::::::', $scope.model.selectedFilter);
+				if($scope.model.selectedFilter) {
+					$http({
+						url: '/filter/getFilter',
+						method: 'POST',
+						headers: {
+							"Content-type": "application/json; charset=UTF-8"
+						},
+						data: JSON.stringify({filterName: $scope.model.selectedFilter})
+					})
+					.then(response => {
+						console.log(response.data);
+						//- $scope.model.allFilters = response.data.filters;
+						$scope.clearFilters();
+						response.data.filters.forEach(filter => {
+							let filterBox = $scope.addFilterBox();
+
+							//- filterBox.options = filter;
+							Object.assign(filterBox.options, filter);
+
+							filterBox.getEvents();
+							filterBox.getTraitKeys();
+							filterBox.getTraitValues();
+						})
+						$scope.applyFilter();
+
+					})
+					.catch(error => {
+						console.error(error);
+					});
+				} else {
+					$scope.clearFilters();
+				}
+			}
+
+			$scope.persistURLState = function () {
+
+				let filterQueries = $scope.filterQueries.map(filter => {
+
+					let options = {};
+					Object.keys(filter.options).forEach(filterOption => {
+						if(filter.options[filterOption] !== ""
+							&& filter.options[filterOption] !== null){
+							options[filterOption] = filter.options[filterOption];
+						}
+					})
+					return options
+				})
+
+				let searchUrl = '?filters=' + JSON.stringify(filterQueries);
+				if($scope.model.selectedFilter){
+					searchUrl = '?selectedFilter='+ $scope.model.selectedFilter +'&filters=' + JSON.stringify(filterQueries);
+				}
+				
+				window.history.replaceState(
+					{},
+					document.title,
+					encodeURI(searchUrl)
+				);
+			}
+
+			if(window.location.search) {
+				function getQueryVariable(variable) {
+				    let query = window.location.search.substring(1);
+				    let vars = query.split('&');
+				    for (let i = 0; i < vars.length; i++) {
+				        let pair = vars[i].split('=');
+				        if (decodeURIComponent(pair[0]) == variable) {
+				            return decodeURIComponent(pair[1]);
+				        }
+				    }
+				    console.log('Query variable %s not found', variable);
+				}
+
+				if(getQueryVariable('selectedFilter')){
+					$scope.model.selectedFilter = getQueryVariable('selectedFilter');
+				}
+				if(getQueryVariable('filters')){
+					let queriedFilter = JSON.parse(getQueryVariable('filters'));
+					queriedFilter.forEach(filter => {
+						let filterBox = $scope.addFilterBox();
+						Object.assign(filterBox.options, filter);
+
+						filterBox.getEvents();
+						filterBox.getTraitKeys();
+						filterBox.getTraitValues();
+
+					})
+				}
+				
+			}
+			
+			$scope.applyFilter();
+			$scope.listFilters();
+		})
+
+		
+		
+		

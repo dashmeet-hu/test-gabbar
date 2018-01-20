@@ -6,16 +6,19 @@ var Event = new keystone.List('Event', {
 });
 
 Event.add({
-	eventName: { type: Types.Text, required: true, index: true, initial: true },
-	timeStamp: { type: Types.Text},
+	eventname: { type: Types.Text, required: true, index: true, initial: true },
+	timestamp: { type: Types.Text},
 	referrer: { type: Types.Text},
-	events: { type: Types.Relationship, ref: 'User', filters: { _id: ':user' }}
+	isAnon: { type: Types.Boolean},
+	anonuser: { type: Types.Relationship, ref: 'AnonUser', many: false},
+	registereduser: { type: Types.Relationship, ref: 'Customer', many: false}
 });
 
 Event.schema.add({
-	data: { type: Object },
-	user: { type: Object}
+	userAgent: String,
+	details: Object
 });
 
+// Event.relationship({path:'user', ref: 'User', refPath: 'events'});
 Event.defaultColumns = 'eventName, timeStamp';
 Event.register();

@@ -13,55 +13,16 @@ rQueue.push({_action:"login",_args:{customer:a,id:e,callback:r}})},captureLead:f
 e){GabbarQueue.push({_action:"captureLead",_args:{lead:a,callback:e}})}});
 
 
-var id = typeof customerId == "undefined" ? null : customerId;
-Gabbar.recognize(id);
+fetch('/getLoggedInUserId', {
+	method: 'GET',
+	credentials: 'same-origin'
+})
+.then(response => {
+	return response.json();
+})
+.then(response => {
+	var id = typeof response.customerId == "undefined" ? null : response.customerId;
+	Gabbar.recognize(id);
 
-window.login = (target) => {
-	console.log(target.value);
-
-	Gabbar.login({
-	customerId : 'customerId',
-	sourceCreatedAt : 'date',
-	sourceUpdatedAt : 'date',
-	contactNo : 'contactNo',
-	email : `${target.value.toLowerCase()}@keystonejs.com`,
-	firstname : `${target.value}`,
-	gender : 'gender',
-	lastname : 'lastname'
-	}, `id-${target.value.toLowerCase()}`, function() {
-	// Code to execute after event is tracked
-	});
-
-}
-// window.sendTaxi = function(){
-// 	Gabbar.track('Booked Taxi', {}, () => {
-// 		console.log('send taxi');	
-// 	});
-// }
-
-// window.sendAuto = function() {
-// 	Gabbar.track('Booked Auto', {}, () => {
-// 		console.log('send auto');
-// 	});
-// }
-
-// window.sendBike = function() {
-// 	Gabbar.track('Booked Bike', {}, () => {
-// 		console.log('send bike');
-// 	});
-// }
-
-document.querySelectorAll('.book-ride').forEach(button => {
-	button.addEventListener('click', evt => {
-		var mainBlock = evt.target.parentElement;
-		Gabbar.track(
-			`Booked Ride`,
-			{
-				"Vehicle":  mainBlock.querySelector('.vehicle').innerText,
-				"When": evt.target.innerText,
-				"Price": mainBlock.querySelector('.price').innerText
-			}
-		)
-	})
-	console.log(button)
+	return;
 })

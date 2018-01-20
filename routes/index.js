@@ -18,6 +18,7 @@
  * http://expressjs.com/api.html#app.VERB
  */
 
+pug = require('pug');
 var keystone = require('keystone');
 var middleware = require('./middleware');
 var importRoutes = keystone.importer(__dirname);
@@ -29,19 +30,57 @@ keystone.pre('render', middleware.flashMessages);
 // Import Route Controllers
 var routes = {
 	views: importRoutes('./views'),
+	gabbar: importRoutes('./gabbar'),
 };
 
-var Event = keystone.list('Event');
-var Customer = keystone.list('Customer');
-var AnonUser = keystone.list('AnonUser');
+var __campaign = keystone.list('Campaign');
+var Cron = require('./gabbar/campaign/startCron.js').Cron;
+
 
 // Setup Route Bindings
 exports = module.exports = function (app) {
 	// Views
 
-	app.get('/landing', routes.views.landing);
-	app.get('/sambha/track.png', routes.views.track);
+	app.post('/login', routes.gabbar.generalRoutes.login);
+	app.post('/logout', routes.gabbar.generalRoutes.logout);
+	app.post('/register', routes.gabbar.generalRoutes.register);
+
+	
+	app.get('/landing', routes.gabbar.generalRoutes.app);
+	app.get('/getLoggedInUserId', routes.gabbar.generalRoutes.getLoggedInUserId);
+
+	app.post('/filter', routes.gabbar.filter.create);
+	app.post('/filter/save', routes.gabbar.filter.save);
+	app.post('/filter/update', routes.gabbar.filter.update);
+	app.post('/filter/list', routes.gabbar.filter.list);
+	app.post('/filter/getFilter', routes.gabbar.filter.getFilter);
+
+	app.post('/campaigns/create', routes.gabbar.campaign.create);
+	app.post('/campaigns/update', routes.gabbar.campaign.update);
+	app.post('/campaigns/list', routes.gabbar.campaign.campaigns);
+	app.post('/campaigns/getCampaign', routes.gabbar.campaign.getCampaign)
+
+	app.get('/campaigns/view/:campaignName', routes.gabbar.campaign.view);
+	app.get('/campaigns', routes.gabbar.campaign.campaigns);
+
+	app.post('/templates/list', routes.gabbar.template.list);
+
+	app.get('/users', routes.views.users);
+	app.get('/users/view/:customerId', routes.gabbar.getUserProfile);
+
+	app.get('/sambha/track.png', routes.gabbar.track);
 	app.get('/', routes.views.index);
+
+
+	__campaign.model.find({}).exec((error, campaigns) => {
+		if(campaigns && !error) {
+			campaigns.forEach(campaign => {
+				let cron = new Cron(campaign._doc);
+				// startCron.initialize(campaign._doc);
+				cron.start();
+			})
+		}
+	})
 
 	// NOTE: To protect a route so that only admins can see it, use the requireUser middleware:
 	// app.get('/protected', middleware.requireUser, routes.views.protected);

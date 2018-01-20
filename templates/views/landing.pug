@@ -2,31 +2,77 @@ extends ../layouts/default
 
 block content
 	.container: .jumbotron
+		div.main
+			div.mainChild
+				h1 Welcome
 
-		#login
-			<input type='button' value='Admin' onclick='login(this)'>
-			<input type='button' value='Dashmeet' onclick='login(this)'>
-			<input type='button' value='Hitesh' onclick='login(this)'>
+				div.main-block
+					h2.vehicle Taxi
+					p.price Rs. 250
+					button.book-ride.now Ride Now
+					button.book-ride.later Schedule a Ride
+
+				div.main-block
+					h2.vehicle Auto
+					p.price Rs. 100
+					button.book-ride.now Ride Now
+					button.book-ride.later Schedule a Ride
+
+				div.main-block
+					h2.vehicle Bike
+					p.price Rs. 50
+					button.book-ride.now Ride Now
+					button.book-ride.later Schedule a Ride
+
+			div.mainChild
+				if loggedInUser
+					div.logoutPanel
+					= loggedInUser.firstname + ' ' + loggedInUser.lastname + ' is logged in, click to '
+					a#logout(href='#') LOGOUT
+
+				else
+					div.loginPanel
+						h1 Login
+
+						if customers
+							each customer in customers
+								// =customer
+								div.login(onclick='login(this)' data-email= customer.email data-password= customer.password)
+									h4= customer.firstname + ' ' + customer.lastname
+
+
+					div.registerPanel
+						h1 Register
+						form#registrationForm(method='post' action='/register' style='display:flex; flex-direction:column; max-width:300px')
+							input(type='text' name='firstname' placeholder='First Name' required)
+							input(type='text' name='lastname' placeholder='Last Name' required)
+							input(type='text' name='gender' placeholder='Male / Female / Other' required)
+							input(type='text' name='email' placeholder='email' required)
+							input(type='password' name='password' placeholder='Password' required)
+							input(type='text' name='contactNo' placeholder='contact Number' required)
+
+							input(type='submit' value='Register')
+						div#formError 
+
+				
+	script(src='/gabbar/js/script.js')
+	//- script.
 		
-		img(src='/images/logo.svg', width='160')
-		h1 Welcome
-
-		div.main-block
-			h2.vehicle Taxi
-			p.price Rs. 250
-			button.book-ride.now Ride Now
-			button.book-ride.later Schedule a Ride
-
-		div.main-block
-			h2.vehicle Auto
-			p.price Rs. 100
-			button.book-ride.now Ride Now
-			button.book-ride.later Schedule a Ride
-
-		div.main-block
-			h2.vehicle Bike
-			p.price Rs. 50
-			button.book-ride.now Ride Now
-			button.book-ride.later Schedule a Ride
-
-		script(src='/gabbar/js/script.js')
+	script(src='/gabbar/localscript/login.js')
+	script(src='/gabbar/localscript/registration.js')
+	script(src='/gabbar/localscript/logout.js')
+		
+	script.
+		document.querySelectorAll('.book-ride').forEach(button => {
+			button.addEventListener('click', evt => {
+				var mainBlock = evt.target.parentElement;
+				Gabbar.track(
+					`Booked Ride`,
+					{
+						"Vehicle":  mainBlock.querySelector('.vehicle').innerText,
+						"When": evt.target.innerText,
+						"Price": mainBlock.querySelector('.price').innerText
+					}
+				)
+			});
+		})

@@ -33,3 +33,256 @@ h2, p {
 	background-color: yellow;
 	border: none;
 }
+
+.login {
+	background-color: #e1e1e1;
+	padding: 20px;
+	display: inline-block;
+	border-radius: 5px;
+	margin: 10px;
+	cursor: pointer;
+}
+
+.login:hover {
+	background-color: #d1d1d1;
+}
+
+.main {
+	display: flex;
+	justify-content: space-between;
+	width: 100%;
+}
+
+.mainChild {
+	width: 45%;
+}
+
+.eventDetails, .basicDetails {
+	margin: 0px 20px;
+}
+
+.basicDetails {
+	margin-top: 30px;
+}
+
+.basicDetails > div {
+	padding: 7px 0;
+	display: flex;
+	justify-content: space-between;
+}
+.eventDetails > div:not(:last-child), .basicDetails > div:not(:last-child) {
+	border-bottom: 1px solid #d1d1d1;
+}
+
+#userProfile {
+	display: grid;
+	grid-template-columns: 1fr 300px;
+	grid-gap: 20px;	
+}
+
+#userProfile .eventDate {
+	color: #6164C1;
+	padding: 5px 20px 10px 20px;
+	margin-top: 30px;
+	margin-bottom: 0px;
+	font-size: 1.2em;
+	border-bottom: 1px solid #6164c1;
+}
+
+#userProfile .systemDetails {
+	text-align: right; 
+}
+
+.eventWrapper {
+	cursor: pointer;
+	display: grid;
+	grid-template-columns: 120px 1fr 1fr;
+}
+
+.eventContainer .eventWrapper:hover {
+	background-color: rgba(0, 0, 0, 0.05);
+}
+
+.eventContainer > div {
+	padding: 5px 10px;
+}
+
+.trackedValues {
+	margin: 20px 0px;
+}
+
+[data-display=false] {
+	display: none;
+}
+
+.trackedValues > div {
+	display: grid;
+	grid-template-columns: 120px 250px 1fr;
+}
+
+.trackedValues > div > span:first-child {
+	grid-column-start: 2;
+}
+
+.activityFeed {
+	background-color: #ffffff;
+	letter-spacing: 0.3px;
+	font-size: 12px;
+	border-radius: 5px;
+	padding-bottom: 10px;
+}
+
+.activityFeed > h4, .profile > h4{
+	letter-spacing: 0.7px;
+	padding: 20px 20px 0px 20px;
+}
+
+.profile {
+	background-color: #ffffff;
+	letter-spacing: 0.3px;
+	font-size: 12px;
+	border-radius: 5px;
+	padding-bottom: 10px;
+}
+
+#filterApp > div {
+	margin-top: 20px;
+	border-radius: 5px;
+	padding: 20px;
+	background-color: #ffffff;
+}
+
+#filterApp .filter > div select:not(:last-child) {
+	margin-right: 5px;
+}
+
+#filterApp .filter > div:not(:last-child) {
+	margin-bottom: 10px;
+}
+
+#filterApp select:focus {
+	outline: none;
+}
+#result {
+	margin-top: 20px;	
+}
+
+#result thead tr{
+	border-bottom: 2px solid #d1d1d1;
+}
+
+#result tbody tr:not(:last-child){
+	border-bottom: 1px solid #e1e1e1;
+}
+
+#result td, #result th {
+	padding: 7px 10px;
+}
+
+#filterApp .filter {
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+}
+
+#filterApp .clearFilters {
+	text-align: right
+}
+
+#filterApp .filterActions {
+	margin-top: 20px;
+	display: flex;
+	justify-content: space-between;
+}
+
+#filterApp button, #filterApp select {
+	cursor: pointer;
+	background-color: #f1f1f1;
+	border: none;
+	padding: 8px;
+	border-radius: 3px;
+	border: 1px solid #d1d1d1;
+}
+
+#filterApp a {
+	cursor: pointer;
+}
+
+#filterApp a:hover {
+	text-decoration: none;
+}
+
+#bodyContainer {
+	background-color: #e1e1e1;
+	height: 100vh;
+	width: 100%;
+	display: grid;
+	grid-template-columns: 200px 1fr;
+	grid-template-rows: 1fr;
+}
+
+#leftBar {
+	background-color: #ffffff;
+	grid-row-start: 1;
+}
+
+#rightBar {
+	grid-row-start: 1;
+	overflow-y: hidden;
+
+	display: grid;
+	grid-template-rows: auto 1fr; 
+}
+
+#bodyContainer .header {
+	background-color: #6164c1;
+	display: flex;
+	justify-content: flex-end;
+	padding: 15px 25px;
+}
+
+#bodyContainer  .block {
+	padding: 20px;
+	overflow-y: scroll;
+}
+
+#bodyContainer .header .loggedUser a{
+	color: #ffffff;
+}
+
+#bodyContainer a:hover {
+	text-decoration: none;
+}
+
+#campaigns .campaignsList {
+	background-color: #ffffff;
+	letter-spacing: 0.3px;
+	font-size: 12px;
+	border-radius: 5px;
+	padding: 10px;
+}
+
+#campaigns .campaignsList > .campaignHead {
+	display: flex;
+	justify-content: space-between;
+	margin-bottom: 30px;
+}
+
+#campaigns button, #campaigns select {
+	cursor: pointer;
+	background-color: #6164c1;
+	color: #f1f1f1;
+	border: none;
+	padding: 8px;
+	border-radius: 3px;
+	border: 1px solid #d1d1d1;
+}
+
+#campaigns select {
+	background-color: #e1e1e1;
+	color: #555555;
+}
+
+#campaigns .createNewCampaign form > div:not(:last-child) {
+	margin-bottom: 15px;
+}

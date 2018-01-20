@@ -1,0 +1,270 @@
+extends ../layouts/default
+
+block content
+	script(src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.6/angular.min.js")
+	div#campaigns(ng-app="CampaignsApp")
+		div(ng-controller="CampaignController")
+			div.campaignsList
+				div.campaignHead
+					h4 Campaigns
+					button(ng-click="toggleCreationPanelVisibility()") Create A New Campaign
+
+				table(style="width:100%")
+					thead
+						tr
+							th
+							th Name
+							th Channel
+							th Status
+							th Last Updated
+
+					tbody
+						tr(ng-repeat="campaign in options.campaigns")
+							td 
+								a(href="" ng-click="editCampaign(campaign.name)") Edit
+							td {{campaign.name}}
+							td {{campaign.communicationChannel}}
+							td(ng-if="campaign.active === true") Active
+							td(ng-if="campaign.active === false") InActive
+							td {{campaign.updatedOn}}
+
+			div.createNewCampaign(ng-if="options.showCreationPanel === true" ng-click="closeCreationPanel($event)" style="display: flex; position:absolute; left:0; top:0; width: 100vw; height: 100vh; background-color: rgba(0,0,0,0.5)")
+				div(style="margin: auto; max-height: 70%; background-color: white; padding: 40px; border-radius: 5px")
+					form(style='display:flex; flex-direction:column; max-width:300px')
+						div
+							input(ng-model="newCampaign.name" type='text' name='name' placeholder='Campaign Name' required)
+
+						div
+							select(ng-model="newCampaign.targetAudience" name='targetAudience' placeholder='Target Audience' required)
+								option(selected value="") -- Select Target Audience --
+								option(ng-repeat="targetAudience in options.targetAudience" value="{{targetAudience}}") {{targetAudience}}
+
+						div
+							select(ng-model="newCampaign.communicationChannel" name='communicationChannel' required)
+								option(value="Email" selected) Email
+
+						div Active
+							input(ng-model="newCampaign.active" type="checkbox" name="active" checked)
+
+						div
+							select(ng-model="newCampaign.template" name='template' required)
+								option(value="" selected) -- Select Template --
+								option(ng-repeat="template in options.templates" value="{{template}}") {{template}}
+
+						div
+							input(ng-model="newCampaign.croneSchedule" name="croneSchedule" type="text" placeholder="* * * * * *")
+
+						div
+							input(type='submit' ng-if="!options.updateCampaign" value='Create' ng-click="createCampaign()")
+							input(type='submit' ng-if="options.updateCampaign" value='Update' ng-click="updateCampaign()")
+
+	script.
+		angular.module('CampaignsApp', [])
+		.controller('CampaignController', function ($scope, $http) {
+
+			$scope.options = {
+				showCreationPanel: false,
+				targetAudience: [],
+				templates: [],
+				campaigns: [],
+				updateCampaign: false
+			}
+
+			$scope.newCampaign = {
+				name: "",
+				targetAudience: "",
+				communicationChannel: "Email",
+				active: true,
+				template: "",
+				croneSchedule: ""
+			}
+
+			$scope.toggleCreationPanelVisibility = function () {
+				$scope.options.showCreationPanel = !$scope.options.showCreationPanel;
+			}
+
+			$scope.closeCreationPanel = function($event) {
+				if($event.currentTarget === $event.target){
+					$scope.toggleCreationPanelVisibility();
+				}
+			}
+
+			$scope.editCampaign = function (campaignName) {
+				console.log('campaignName: ', campaignName);
+				$scope.getCampaign(campaignName, (e, r) => {
+					console.log(r);
+					$scope.options.updateCampaign = true;
+					$scope.toggleCreationPanelVisibility();
+					Object.keys($scope.newCampaign).forEach(dataKey => {
+						$scope.newCampaign[dataKey] = r[dataKey];
+					})
+
+				})
+			}
+
+			$scope.getCampaign = function (campaignName, cb) {
+				let campaignDetails = $http({
+					url: '/campaigns/getCampaign',
+					method: 'POST',
+					headers: {
+						"Content-type": "application/json; charset=UTF-8"
+					},
+					data: JSON.stringify({name: campaignName})
+				})
+				.then(response => {
+					return cb(null, response.data.campaign);
+				})
+				.catch(error => {
+					console.error(error);
+					return cb(error);
+				});
+			}
+
+			$scope.listFilters = function () {
+				$http({
+					url: '/filter/list',
+					method: 'POST',
+					headers: {
+						"Content-type": "application/json; charset=UTF-8"
+					}
+				})
+				.then(response => {
+					$scope.options.targetAudience = response.data.filters;
+				})
+				.catch(error => {
+					console.error(error);
+				});
+			}
+
+			$scope.listTemplates = function () {
+				$http({
+					url: '/templates/list',
+					method: 'POST',
+					headers: {
+						"Content-type": "application/json; charset=UTF-8"
+					}
+				})
+				.then(response => {
+					$scope.options.templates = response.data.templates;
+				})
+				.catch(error => {
+					console.error(error);
+				});
+			}
+
+			$scope.listCampaigns = function () {
+				$http({
+					url: '/campaigns/list',
+					method: 'POST',
+					headers: {
+						"Content-type": "application/json; charset=UTF-8"
+					}
+				})
+				.then(response => {
+					$scope.options.campaigns = response.data.campaigns;
+				})
+				.catch(error => {
+					console.error(error);
+				});
+			}
+
+			$scope.updateCampaign = function () {
+				console.log('updated')
+
+				let shootFetchRequest = $scope.validateFormData();
+
+				if(shootFetchRequest) {
+					console.log('hey')
+					$http({
+						url: '/campaigns/update',
+						method: 'POST',
+						headers: {
+							"Content-type": "application/json; charset=UTF-8"
+						},
+						data: JSON.stringify($scope.newCampaign)
+					})
+					.then(response => {
+						console.log(response.data);
+
+						$scope.newCampaign = {
+							name: "",
+							targetAudience: "",
+							communicationChannel: "Email",
+							active: true,
+							template: "",
+							croneSchedule: ""
+						}
+
+						$scope.listCampaigns();
+						$scope.toggleCreationPanelVisibility();
+						$scope.options.updateCampaign = false;
+					})
+					.catch(error => {
+						console.error(error);
+					});
+				}
+			}
+
+			$scope.validateFormData = function () {
+				let shootFetchRequest = true;
+				Object.keys($scope.newCampaign).forEach(dataKey => {
+					switch(dataKey) {
+						case 'name':
+						case 'targetAudience':
+						case 'template':
+						case 'croneSchedule':
+							if(!$scope.newCampaign[dataKey]){
+								shootFetchRequest = false;
+							}
+							break;
+						default:
+							break;
+					}
+				});
+
+				return shootFetchRequest;
+			}
+
+			$scope.createCampaign = function () {
+				console.log('created')
+
+				let shootFetchRequest = $scope.validateFormData();
+
+				if(shootFetchRequest) {
+					$http({
+						url: '/campaigns/create',
+						method: 'POST',
+						headers: {
+							"Content-type": "application/json; charset=UTF-8"
+						},
+						data: JSON.stringify($scope.newCampaign)
+					})
+					.then(response => {
+						console.log(response.data);
+
+						$scope.newCampaign = {
+							name: "",
+							targetAudience: "",
+							communicationChannel: "Email",
+							active: true,
+							template: "",
+							croneSchedule: ""
+						}
+
+						$scope.listCampaigns();
+						$scope.toggleCreationPanelVisibility();
+					})
+					.catch(error => {
+						console.error(error);
+					});
+				}
+			}
+
+			$scope.listCampaigns();
+			$scope.listFilters();
+			$scope.listTemplates();
+		})
+
+
+
+
